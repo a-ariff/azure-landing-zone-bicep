@@ -1,10 +1,21 @@
+<!-- Top anchor for back-to-top links -->
+<a id="top"></a>
+
 # Azure Landing Zone Bicep
 
 [![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoft-azure&logoColor=white)](https://azure.microsoft.com/)
 [![Bicep](https://img.shields.io/badge/Bicep-0078D4?style=for-the-badge&logo=azure-devops&logoColor=white)](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-## Overview
+## Table of Contents
+- [📖 About](#-about)
+- [🛠️ Skills](#️-skills)
+- [🚀 Featured Projects](#-featured-projects)
+- [🏅 Certifications](#-certifications)
+- [💼 Experience](#-experience)
+- [📞 Contact](#-contact)
+
+## 📖 About
 
 A comprehensive Azure Landing Zone implementation using Bicep Infrastructure as Code (IaC) templates. This repository provides enterprise-ready, scalable cloud architecture patterns following Microsoft's Cloud Adoption Framework (CAF) and Well-Architected Framework principles.
 
@@ -17,7 +28,11 @@ A comprehensive Azure Landing Zone implementation using Bicep Infrastructure as 
 - **Identity & Access Management**: Azure AD integration with RBAC and Conditional Access policies
 - **Monitoring & Logging**: Centralized logging with Azure Monitor and Log Analytics
 
-## Repository Structure
+[Back to top](#top)
+
+## 🛠️ Skills
+
+### Repository Structure
 
 ```
 azure-landing-zone-bicep/
@@ -64,8 +79,6 @@ azure-landing-zone-bicep/
 └── README.md
 ```
 
-## Quick Start
-
 ### Prerequisites
 
 - Azure CLI 2.40.0 or later
@@ -73,7 +86,11 @@ azure-landing-zone-bicep/
 - Azure subscription with Owner or Contributor permissions
 - PowerShell 7.0+ or Bash
 
-### Deployment
+[Back to top](#top)
+
+## 🚀 Featured Projects
+
+### Quick Start
 
 1. **Clone the repository**
    ```bash
@@ -96,48 +113,69 @@ azure-landing-zone-bicep/
      --parameters @parameters/dev/main.parameters.json
    ```
 
-## Architecture Components
+### Architecture Components
 
-### Networking
+#### Networking
 - Hub and spoke network topology
 - Azure Firewall for centralized security
 - Network Security Groups (NSGs) with standardized rules
 - Azure Bastion for secure remote access
 
-### Security
+#### Security
 - Azure Key Vault for secrets management
 - Azure Security Center integration
 - Just-in-Time (JIT) VM access
 - Azure Sentinel for security monitoring
 
-### Governance
+#### Governance
 - Azure Policy for compliance enforcement
 - Resource tagging standards
 - Cost management and budgeting
 - Azure Blueprints for repeatable deployments
 
-## Contributing
+[Back to top](#top)
+
+## 🏅 Certifications
+
+This project follows enterprise-grade standards and best practices:
+
+- Microsoft Cloud Adoption Framework (CAF) compliance
+- Well-Architected Framework principles
+- Azure security benchmarks
+- Industry compliance standards (ISO 27001, SOC 2)
+
+[Back to top](#top)
+
+## 💼 Experience
+
+### Contributing
 
 Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
 
-## Documentation
+### Documentation
 
 - [Architecture Overview](docs/architecture/overview.md)
 - [Deployment Guide](docs/deployment-guide.md)
 - [Best Practices](docs/best-practices.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
-## License
+### License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+[Back to top](#top)
+
+## 📞 Contact
+
+### Support
 
 For questions and support:
 - Create an [issue](https://github.com/a-ariff/azure-landing-zone-bicep/issues)
-- Check the [documentation](docs/)
+- Check the [documentation](docs)
 - Review [Azure Landing Zone documentation](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/)
 
-## Tags
+### Tags
 
-`azure` `bicep` `infrastructure-as-code` `landing-zone` `cloud-adoption-framework` `enterprise-scale` `governance` `security` `networking` `devops`
+azure bicep infrastructure-as-code landing-zone cloud-adoption-framework enterprise-scale governance security networking devops
+
+[Back to top](#top)
