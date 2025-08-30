@@ -1,134 +1,35 @@
-# Troubleshooting Guide
+# Troubleshooting
 
-This document provides solutions to common issues encountered when working with Azure Landing Zone Bicep templates.
+This guide helps identify and resolve common issues when deploying or managing the Azure Landing Zone using Bicep.
 
-## Deployment Issues
+## Common Errors & Solutions
+### 1. Validation Errors
+- **Cause:** Parameters missing or invalid values.
+- **Solution:** Double-check required parameters; use `bicep build` and `bicep linter` to validate files.
 
-### Template Validation Errors
+### 2. Permission Denied
+- **Cause:** Insufficient Azure RBAC permissions.
+- **Solution:** Ensure the account has at least 'Contributor' rights. For policy, role or management group actions, 'Owner' may be required.
 
-#### Problem
-Bicep templates fail validation during deployment.
+### 3. Module Not Found
+- **Cause:** Bicep module reference path is wrong or module file missing.
+- **Solution:** Check README for module structure. Confirm referenced files exist in `bicep/`.
 
-#### Solution
-1. Check syntax using Azure CLI:
-   ```bash
-   az bicep build --file main.bicep
-   ```
-2. Validate parameter files format
-3. Ensure all required parameters are provided
+### 4. Resource Already Exists
+- **Cause:** Name collision on resource group, VNet, or subnet.
+- **Solution:** Use unique names or clean up old resources before redeployment.
 
-### Resource Naming Conflicts
+### 5. Deployment Quota Exceeded
+- **Cause:** Subscription/resource group quota limits hit.
+- **Solution:** Review quota in Azure Portal. Request quota increases as needed.
 
-#### Problem
-Deployment fails due to existing resource names.
+## Diagnostics & Support
+- Use `az deployment sub validate` before running full deployment.
+- Check Azure Activity Log and Resource Health for errors.
+- Use `bicep --help` and `az deployment -h` for command line help.
+- For issues with Azure Policy/Blueprints, use built-in Portal audit and compliance reports.
 
-#### Solution
-- Use unique naming conventions with prefixes/suffixes
-- Check Azure resource naming rules and restrictions
-- Implement name uniqueness functions in templates
-
-### Permission Errors
-
-#### Problem
-Insufficient permissions to create resources.
-
-#### Solution
-- Verify service principal has required permissions
-- Check subscription-level and resource group-level access
-- Ensure custom roles have necessary actions
-
-## Networking Issues
-
-### Connectivity Problems
-
-#### Problem
-Resources cannot communicate across virtual networks.
-
-#### Solution
-1. Verify VNet peering configuration
-2. Check Network Security Group rules
-3. Validate route table configurations
-4. Ensure DNS resolution is working
-
-### Firewall Rules
-
-#### Problem
-Azure Firewall blocking legitimate traffic.
-
-#### Solution
-- Review firewall rules and priorities
-- Check application rules vs network rules
-- Validate FQDN filtering configuration
-- Monitor firewall logs for blocked traffic
-
-## Authentication Issues
-
-### Service Principal Problems
-
-#### Problem
-Authentication failures during automated deployments.
-
-#### Solution
-1. Verify service principal credentials
-2. Check certificate/secret expiration
-3. Validate role assignments
-4. Ensure proper scope assignments
-
-### Key Vault Access
-
-#### Problem
-Cannot retrieve secrets from Key Vault.
-
-#### Solution
-- Check Key Vault access policies
-- Verify managed identity permissions
-- Ensure firewall and virtual network rules allow access
-- Validate secret names and versions
-
-## Performance Issues
-
-### Slow Deployment Times
-
-#### Problem
-Templates take too long to deploy.
-
-#### Solution
-- Use parallel deployment where possible
-- Optimize template dependencies
-- Consider breaking large templates into modules
-- Use copy loops efficiently
-
-### Resource Sizing
-
-#### Problem
-Resources are over or under-provisioned.
-
-#### Solution
-- Monitor resource utilization metrics
-- Implement auto-scaling policies
-- Right-size based on workload requirements
-- Use Azure Advisor recommendations
-
-## Common Error Messages
-
-### "Resource not found"
-- Check resource names and case sensitivity
-- Verify resource exists in correct subscription/resource group
-- Ensure dependencies are properly defined
-
-### "Quota exceeded"
-- Check subscription quotas and limits
-- Request quota increases if needed
-- Consider alternative resource configurations
-
-### "Location not supported"
-- Verify resource provider registration
-- Check if service is available in target region
-- Consider alternative locations
-
-## Getting Help
-
-- Review Azure documentation and best practices
-- Check GitHub issues and community forums
-- Use Azure Support for complex issues
-- Monitor Azure Service Health for service disruptions
+## Getting More Help
+- Search open and closed issues in this repo.
+- Create a new GitHub issue with error message and steps to reproduce.
+- Consult official Microsoft docs for [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) and [Cloud Adoption Framework](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/).
