@@ -1,43 +1,38 @@
 # Best Practices
 
-This document outlines the best practices for Azure Landing Zone implementation using Bicep templates.
+## Bicep Template Design
+- Structure modules for repeatability and reusability.
+- Prefer parameters for values that change per environment.
+- Use outputs to pass values between modules.
+- Reference parameter and variable files—avoid hardcoding secrets or sensitive info.
 
-## Infrastructure as Code
+## Naming & Tagging
+- Adopt a universal naming convention (e.g., `az-<env>-<resourceType>-<appName>`).
+- Apply tags for environment, owner, cost center, and compliance.
 
-### Bicep Template Design
-- Use modular templates for reusability
-- Implement proper parameter validation
-- Follow naming conventions consistently
+## Security & Governance
+- Assign least-privilege RBAC roles using Azure AD groups.
+- Deploy built-in or custom Azure Policy assignments for compliance.
+- Enable resource locks on key infrastructure.
+- Integrate with Azure Key Vault for secrets and certificates.
 
-### Resource Organization
-- Group related resources logically
-- Use resource tags for governance
-- Implement proper dependency management
+## Networking
+- Use hub-and-spoke VNet design with peering.
+- Secure management and shared resources in the hub.
+- Define NSG rules strictly (deny all by default, allow only needed traffic).
 
-### Security Best Practices
-- Implement least privilege access
-- Use Azure Key Vault for secrets management
-- Enable audit logging and monitoring
+## Scalability
+- Use modules for workloads that may need to scale horizontally.
+- Parameterize size and SKU for compute/storage/network resources.
+- Leverage Azure Monitor and Log Analytics for central monitoring.
 
-### Performance Optimization
-- Right-size resources based on workload requirements
-- Implement auto-scaling where appropriate
-- Monitor and optimize costs regularly
-
-## Deployment Practices
-
-### CI/CD Pipeline
-- Use infrastructure validation in pipelines
-- Implement automated testing
-- Use staging environments for validation
-
-### Environment Management
-- Separate development, staging, and production
-- Use parameter files for environment-specific configurations
-- Implement proper change management processes
+## Automation & Testing
+- Leverage CI/CD pipelines for deployment (GitHub Actions, Azure DevOps).
+- Test deployments in dev or sandbox environment before deploying to prod.
+- Use `what-if` for dry runs and plan validation.
 
 ## Documentation
+- Comment templates with purpose, input/output, and examples.
+- Maintain clear documentation for onboarding and support.
 
-- Keep documentation up-to-date with infrastructure changes
-- Document architectural decisions and rationale
-- Maintain runbooks for operational procedures
+For more guidance, see the Microsoft Cloud Adoption Framework and Well-Architected Framework.
