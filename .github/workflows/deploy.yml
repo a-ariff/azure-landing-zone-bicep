@@ -1,0 +1,168 @@
+name: Deploy Azure Landing Zone
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bicep/**'
+      - 'parameters/**'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bicep/**'
+      - 'parameters/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Validate: lint, build, and what-if on every push and PR
+  # -----------------------------------------------------------------------
+  validate:
+    name: Validate Bicep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: |
+          az bicep install
+          az bicep version
+
+      - name: Lint Bicep files
+        run: |
+          echo "Running Bicep linter on all .bicep files..."
+          find bicep -name '*.bicep' -print0 | while IFS= read -r -d '' file; do
+            echo "Linting: $file"
+            az bicep lint --file "$file" 2>&1 || true
+          done
+
+      - name: Build main template
+        run: |
+          az bicep build --file bicep/main.bicep
+          echo "Bicep build succeeded"
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if (dev)
+        id: whatif
+        run: |
+          result=$(az deployment sub what-if \
+            --location australiaeast \
+            --template-file bicep/main.bicep \
+            --parameters parameters/dev/main.bicepparam \
+            --no-pretty-print 2>&1) || true
+          echo "whatif_output<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$result" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Comment PR with what-if results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### Azure Landing Zone - What-If Results
+
+            \`\`\`
+            ${{ steps.whatif.outputs.whatif_output }}
+            \`\`\`
+
+            *Triggered by commit \`${{ github.sha }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  # -----------------------------------------------------------------------
+  # Deploy Dev: automatically on push to main
+  # -----------------------------------------------------------------------
+  deploy-dev:
+    name: Deploy to Dev
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy landing zone (dev)
+        run: |
+          az deployment sub create \
+            --name "lz-dev-$(date +%Y%m%d%H%M%S)" \
+            --location australiaeast \
+            --template-file bicep/main.bicep \
+            --parameters parameters/dev/main.bicepparam \
+            --verbose
+
+  # -----------------------------------------------------------------------
+  # Deploy Prod: manual trigger only, requires environment protection rules
+  # -----------------------------------------------------------------------
+  deploy-prod:
+    name: Deploy to Production
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if (production)
+        run: |
+          echo "=== Production What-If Preview ==="
+          az deployment sub what-if \
+            --location australiaeast \
+            --template-file bicep/main.bicep \
+            --parameters parameters/prod/main.bicepparam
+
+      - name: Deploy landing zone (production)
+        run: |
+          az deployment sub create \
+            --name "lz-prod-$(date +%Y%m%d%H%M%S)" \
+            --location australiaeast \
+            --template-file bicep/main.bicep \
+            --parameters parameters/prod/main.bicepparam \
+            --verbose

@@ -1,181 +1,171 @@
-<!-- Top anchor for back-to-top links -->
-<a id="top"></a>
+Azure Landing Zone Bicep
 
-# Azure Landing Zone Bicep
+[Azure] [Bicep] [License: MIT] [CI/CD]
 
-[![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoft-azure&logoColor=white)](https://azure.microsoft.com/)
-[![Bicep](https://img.shields.io/badge/Bicep-0078D4?style=for-the-badge&logo=azure-devops&logoColor=white)](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+Enterprise-ready Azure Landing Zone built entirely in Bicep. Implements hub-and-spoke networking with an optional Azure Virtual WAN path, Azure Firewall with IDPS, VPN Gateway, Bastion, Key Vault, and centralised monitoring through Log Analytics and Sentinel.
 
-## Table of Contents
-- [📖 About](#-about)
-- [🛠️ Skills](#️-skills)
-- [🚀 Featured Projects](#-featured-projects)
-- [🏅 Certifications](#-certifications)
-- [💼 Experience](#-experience)
-- [📞 Contact](#-contact)
+Table of Contents
 
-## 📖 About
+- Architecture
+- What is in this repo
+- Features
+- Prerequisites
+- Quick start
+- Module reference
+- CI/CD pipeline
+- Contributing
 
-A comprehensive Azure Landing Zone implementation using Bicep Infrastructure as Code (IaC) templates. This repository provides enterprise-ready, scalable cloud architecture patterns following Microsoft's Cloud Adoption Framework (CAF) and Well-Architected Framework principles.
+Architecture
 
-### Key Features
+Two topology options are provided. Choose hub-and-spoke for smaller environments where you need full control, or vWAN when you have 30+ branch sites and want Microsoft-managed routing.
 
-- **Enterprise-Scale Architecture**: Modular Bicep templates for scalable cloud infrastructure
-- **Governance & Compliance**: Built-in Azure Policy assignments and security configurations
-- **Multi-Environment Support**: Parameterized templates for dev, staging, and production environments
-- **Network Segmentation**: Hub-and-spoke network topology with secure connectivity patterns
-- **Identity & Access Management**: Azure AD integration with RBAC and Conditional Access policies
-- **Monitoring & Logging**: Centralized logging with Azure Monitor and Log Analytics
+    Hub-and-Spoke topology
+    ======================
 
-[Back to top](#top)
+        On-Premises
+            |
+        [VPN Gateway]
+            |
+      +-----+-----+
+      |  Hub VNet  |
+      |  10.0.0.0  |
+      |            |
+      | +--------+ |      +------------------+
+      | |  Azure | |      |   Spoke VNet A   |
+      | |Firewall|--------| App / DB / Mgmt  |
+      | +--------+ |      +------------------+
+      |            |
+      | +--------+ |      +------------------+
+      | | Bastion| |      |   Spoke VNet B   |
+      | +--------+ |------| App / DB / Mgmt  |
+      +-----+-----+      +------------------+
+            |
+      [Log Analytics + Sentinel]
 
-## 🛠️ Skills
 
-### Repository Structure
+    Virtual WAN topology
+    ====================
 
-```
-azure-landing-zone-bicep/
-├── bicep/
-│   ├── core/
-│   │   ├── networking/
-│   │   │   ├── hub-vnet.bicep
-│   │   │   ├── spoke-vnet.bicep
-│   │   │   └── peering.bicep
-│   │   ├── security/
-│   │   │   ├── key-vault.bicep
-│   │   │   ├── nsg-rules.bicep
-│   │   │   └── azure-firewall.bicep
-│   │   ├── compute/
-│   │   │   ├── vm-windows.bicep
-│   │   │   ├── vm-linux.bicep
-│   │   │   └── app-service.bicep
-│   │   └── storage/
-│   │       ├── storage-account.bicep
-│   │       └── blob-containers.bicep
-│   ├── modules/
-│   │   ├── logging/
-│   │   ├── monitoring/
-│   │   └── backup/
-│   └── main.bicep
-├── parameters/
-│   ├── dev/
-│   ├── staging/
-│   └── production/
-├── policies/
-│   ├── governance/
-│   ├── security/
-│   └── compliance/
-├── scripts/
-│   ├── deployment/
-│   ├── validation/
-│   └── cleanup/
-├── docs/
-│   ├── architecture/
-│   ├── deployment-guide.md
-│   └── best-practices.md
-├── .github/
-│   └── workflows/
-└── README.md
-```
+        Branch 1 ---+
+        Branch 2 ---+--- [vWAN VPN Gateway] --- Virtual Hub --- Spoke VNets
+        Branch N ---+          |
+                         [Route Tables]
 
-### Prerequisites
+What is in this repo
 
-- Azure CLI 2.40.0 or later
-- Bicep CLI 0.12.0 or later
-- Azure subscription with Owner or Contributor permissions
-- PowerShell 7.0+ or Bash
+    azure-landing-zone-bicep/
+      bicep/
+        main.bicep                              -- orchestrator (subscription scope)
+        core/
+          networking/
+            hub-vnet.bicep                      -- hub VNet, Firewall, VPN GW, Bastion
+            spoke-vnet.bicep                    -- spoke VNet, peering, NSGs, diagnostics
+            vwan.bicep                          -- Virtual WAN, Virtual Hub, VPN
+          security/
+            azure-firewall.bicep                -- standalone Firewall with IDPS + rules
+            key-vault.bicep                     -- Key Vault, RBAC, private endpoint
+          monitoring/
+            log-analytics.bicep                 -- Log Analytics, Sentinel, VMInsights
+      parameters/
+        dev/main.bicepparam                     -- development environment values
+        prod/main.bicepparam                    -- production environment values
+      scripts/
+        deploy.sh                               -- interactive deployment helper
+      .github/
+        workflows/
+          deploy.yml                            -- GitHub Actions CI/CD pipeline
+      docs/                                     -- architecture and deployment guides
 
-[Back to top](#top)
+Features
 
-## 🚀 Featured Projects
+- Azure Virtual WAN support – full vWAN module alongside traditional hub-and-spoke
+- Azure Firewall with IDPS – Premium SKU with intrusion detection in Deny mode, application and network rule collections, DNS proxy
+- Bicep native – no ARM JSON, no Terraform; pure Bicep with .bicepparam files
+- GitHub Actions CI/CD – lint, build, what-if on PRs, auto-deploy dev on merge, manual production deploy with environment protection
+- Modular design – each resource type is an independent module you can compose or deploy standalone
+- Multi-environment – parameterised for dev, staging, and production with sensible defaults per tier
+- Security first – Key Vault with RBAC and purge protection, NSGs with deny-all baseline, network ACLs with default deny
+- Observability – Log Analytics with Sentinel, VMInsights, and diagnostic settings wired through every module
 
-### Quick Start
+Prerequisites
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/a-ariff/azure-landing-zone-bicep.git
-   cd azure-landing-zone-bicep
-   ```
+  --------------------------------------------------------------------------------------------------------------------------
+  Tool                 Minimum version                                    Install
+  -------------------- -------------------------------------------------- --------------------------------------------------
+  Azure CLI            2.50.0                                             brew install azure-cli or aka.ms/installazurecli
 
-2. **Configure parameters**
-   ```bash
-   # Copy and modify parameter files
-   cp parameters/dev/main.parameters.json.example parameters/dev/main.parameters.json
-   ```
+  Bicep CLI            0.22.0                                             az bicep install
 
-3. **Deploy the landing zone**
-   ```bash
-   # Deploy to development environment
-   az deployment sub create \
-     --location eastus \
-     --template-file bicep/main.bicep \
-     --parameters @parameters/dev/main.parameters.json
-   ```
+  Azure subscription   Owner or Contributor + User Access Administrator   
 
-### Architecture Components
+  PowerShell or Bash   7.0+ / 5.0+                                        
+  --------------------------------------------------------------------------------------------------------------------------
 
-#### Networking
-- Hub and spoke network topology
-- Azure Firewall for centralized security
-- Network Security Groups (NSGs) with standardized rules
-- Azure Bastion for secure remote access
+Quick start
 
-#### Security
-- Azure Key Vault for secrets management
-- Azure Security Center integration
-- Just-in-Time (JIT) VM access
-- Azure Sentinel for security monitoring
+    # clone
+    git clone https://github.com/a-ariff/azure-landing-zone-bicep.git
+    cd azure-landing-zone-bicep
 
-#### Governance
-- Azure Policy for compliance enforcement
-- Resource tagging standards
-- Cost management and budgeting
-- Azure Blueprints for repeatable deployments
+    # login and select subscription
+    az login
+    az account set --subscription "<subscription-id>"
 
-[Back to top](#top)
+    # deploy to dev
+    az deployment sub create \
+      --location australiaeast \
+      --template-file bicep/main.bicep \
+      --parameters parameters/dev/main.bicepparam
 
-## 🏅 Certifications
+    # or use the helper script
+    chmod +x scripts/deploy.sh
+    ./scripts/deploy.sh dev
 
-This project follows enterprise-grade standards and best practices:
+Module reference
 
-- Microsoft Cloud Adoption Framework (CAF) compliance
-- Well-Architected Framework principles
-- Azure security benchmarks
-- Industry compliance standards (ISO 27001, SOC 2)
+  --------------------------------------------------------------------------------------------------------------------
+  Module                                      Scope             Description
+  ------------------------------------------- ----------------- ------------------------------------------------------
+  bicep/main.bicep                            subscription      Creates resource groups, calls all modules in order
 
-[Back to top](#top)
+  bicep/core/networking/hub-vnet.bicep        resourceGroup     Hub VNet with Azure Firewall, VPN Gateway, Bastion
 
-## 💼 Experience
+  bicep/core/networking/spoke-vnet.bicep      resourceGroup     Spoke VNet with NSGs, peering to hub, diagnostics
 
-### Contributing
+  bicep/core/networking/vwan.bicep            resourceGroup     Virtual WAN, Virtual Hub, VPN Gateway, VPN Site
 
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
+  bicep/core/security/azure-firewall.bicep    resourceGroup     Standalone Firewall with IDPS, app and network rules
 
-### Documentation
+  bicep/core/security/key-vault.bicep         resourceGroup     Key Vault with RBAC, private endpoint, diagnostics
 
-- [Architecture Overview](docs/architecture/overview.md)
-- [Deployment Guide](docs/deployment-guide.md)
-- [Best Practices](docs/best-practices.md)
-- [Troubleshooting](docs/troubleshooting.md)
+  bicep/core/monitoring/log-analytics.bicep   resourceGroup     Log Analytics, Sentinel, VMInsights, Security
+  --------------------------------------------------------------------------------------------------------------------
 
-### License
+CI/CD pipeline
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The GitHub Actions workflow (.github/workflows/deploy.yml) runs on every push and PR that touches bicep/** or parameters/**.
 
-[Back to top](#top)
+  ---------------------------------------------------------------------------------------------------
+  Job           Trigger                 What it does
+  ------------- ----------------------- -------------------------------------------------------------
+  validate      push, PR                Bicep lint, build, what-if; comments what-if results on PRs
 
-## 📞 Contact
+  deploy-dev    push to main            Deploys to the dev environment automatically
 
-### Support
+  deploy-prod   manual dispatch         Requires environment protection approval before deploying
+  ---------------------------------------------------------------------------------------------------
 
-For questions and support:
-- Create an [issue](https://github.com/a-ariff/azure-landing-zone-bicep/issues)
-- Check the [documentation](docs)
-- Review [Azure Landing Zone documentation](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/)
+Authentication uses OIDC federated credentials (no secrets stored). Configure AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, and AZURE_CLIENT_ID as repository secrets.
 
-### Tags
+Contributing
 
-azure bicep infrastructure-as-code landing-zone cloud-adoption-framework enterprise-scale governance security networking devops
+1.  Fork the repository
+2.  Create a feature branch
+3.  Make changes and verify with az bicep build --file bicep/main.bicep
+4.  Open a pull request – the workflow will validate and post what-if results
 
-[Back to top](#top)
+License
+
+MIT – see LICENSE for details.
+
+Back to top
